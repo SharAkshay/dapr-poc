@@ -1,0 +1,10 @@
+CREATE DATABASE IF NOT EXISTS dapr_poc;
+
+USE dapr_poc;
+
+CREATE TABLE IF NOT EXISTS request_details (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    service VARCHAR(255),
+    message TEXT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

@@ -1,0 +1,94 @@
+version: '3.8'
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: dapr
+      MYSQL_DATABASE: dapr_poc
+      MYSQL_USER: dapr
+      MYSQL_PASSWORD: dapruser
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./db-init.sql:/docker-entrypoint-initdb.d/db-init.sql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dapr-network
+
+  service-a:
+    image: service-a:latest
+    container_name: service-a
+    build:
+      context: ./service-a
+    ports:
+      - "5001:5001"
+    networks:
+      - dapr-network
+    environment:
+      - DAPR_HTTP_PORT=3500
+      - DAPR_GRPC_PORT=50001
+      - APP_ID=service-a
+
+  service-a-dapr:
+    image: daprio/daprd:latest
+    container_name: service-a-dapr
+    command: [
+      "./daprd",
+      "--app-id", "service-a",
+      "--app-port", "5001",
+      "--dapr-http-port", "3500",
+      "--dapr-grpc-port", "50001"
+    ]
+    depends_on:
+      service-a:
+        condition: service_started
+    networks:
+      - dapr-network
+    ports:
+      - "3500:3500"
+
+  service-b:
+    image: service-b:latest
+    container_name: service-b
+    build:
+      context: ./service-b
+    ports:
+      - "5002:5002"
+    networks:
+      - dapr-network
+    environment:
+      - DAPR_HTTP_PORT=3501docker logs service-a-dapr
+      - DAPR_GRPC_PORT=50002
+      - APP_ID=service-b
+    depends_on:
+      mysql:
+        condition: service_healthy
+  service-b-dapr:
+    image: daprio/daprd:latest
+    container_name: service-b-dapr
+    command: [
+      "./daprd",
+      "--app-id", "service-b",
+      "--app-port", "5002",
+      "--dapr-http-port", "3501",
+      "--dapr-grpc-port", "50002"
+    ]
+    depends_on:
+      - service-b
+    networks:
+      - dapr-network
+    ports:
+      - "3501:3501"
+
+volumes:
+  mysql-data:
+
+networks:
+  dapr-network:
+    driver: bridge
