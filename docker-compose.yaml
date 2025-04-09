@@ -16,7 +16,7 @@ services:
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       retries: 5
     networks:
       - dapr-network
@@ -34,6 +34,11 @@ services:
       - DAPR_HTTP_PORT=3500
       - DAPR_GRPC_PORT=50001
       - APP_ID=service-a
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:5001/actuator/health" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
 
   service-a-dapr:
     image: daprio/daprd:latest
@@ -42,16 +47,22 @@ services:
       "./daprd",
       "--app-id", "service-a",
       "--app-port", "5001",
+      "--app-channel-address", "service-a",
       "--dapr-http-port", "3500",
-      "--dapr-grpc-port", "50001"
+      "--dapr-grpc-port", "50001",
+      "--log-level", "debug"
     ]
     depends_on:
       service-a:
-        condition: service_started
+        condition: service_healthy
     networks:
       - dapr-network
+    environment:
+      - DAPR_INSECURE=true
+      - DAPR_LOG_LEVEL=debug
     ports:
       - "3500:3500"
+      - "50001:50001"
 
   service-b:
     image: service-b:latest
@@ -63,12 +74,18 @@ services:
     networks:
       - dapr-network
     environment:
-      - DAPR_HTTP_PORT=3501docker logs service-a-dapr
+      - DAPR_HTTP_PORT=3501
       - DAPR_GRPC_PORT=50002
       - APP_ID=service-b
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:5002/actuator/health" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
     depends_on:
       mysql:
         condition: service_healthy
+
   service-b-dapr:
     image: daprio/daprd:latest
     container_name: service-b-dapr
@@ -76,15 +93,21 @@ services:
       "./daprd",
       "--app-id", "service-b",
       "--app-port", "5002",
+      "--app-channel-address", "service-b",
       "--dapr-http-port", "3501",
-      "--dapr-grpc-port", "50002"
+      "--dapr-grpc-port", "50002",
+      "--log-level", "debug"
     ]
     depends_on:
       - service-b
     networks:
       - dapr-network
+    environment:
+      - DAPR_INSECURE=true
+      - DAPR_LOG_LEVEL=debug
     ports:
       - "3501:3501"
+      - "50002:50002"
 
 volumes:
   mysql-data:
