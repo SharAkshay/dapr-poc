@@ -4,10 +4,10 @@ services:
     image: mysql:8.0
     container_name: mysql
     environment:
-      MYSQL_ROOT_PASSWORD: dapr
-      MYSQL_DATABASE: dapr_poc
-      MYSQL_USER: dapr
-      MYSQL_PASSWORD: dapruser
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
@@ -50,7 +50,7 @@ services:
       "--app-channel-address", "service-a",
       "--dapr-http-port", "3500",
       "--dapr-grpc-port", "50001",
-      "--log-level", "debug"
+      "--enable-metrics"
     ]
     depends_on:
       service-a:
@@ -63,6 +63,9 @@ services:
     ports:
       - "3500:3500"
       - "50001:50001"
+    expose:
+      - "3500"
+      - "50001"
 
   service-b:
     image: service-b:latest
@@ -77,6 +80,9 @@ services:
       - DAPR_HTTP_PORT=3501
       - DAPR_GRPC_PORT=50002
       - APP_ID=service-b
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE}
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:5002/actuator/health" ]
       interval: 10s
@@ -96,7 +102,7 @@ services:
       "--app-channel-address", "service-b",
       "--dapr-http-port", "3501",
       "--dapr-grpc-port", "50002",
-      "--log-level", "debug"
+      "--enable-metrics"
     ]
     depends_on:
       - service-b
