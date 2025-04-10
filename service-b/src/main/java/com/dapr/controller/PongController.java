@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 /**
  * Controller for handling requests to Service B.
  */
@@ -31,7 +33,7 @@ public class PongController {
      * @return ResponseEntity containing the response
      */
     @PostMapping("/ping")
-    public ResponseEntity<Response> ping(@RequestBody String payload) {
+    public ResponseEntity<Response> ping(@RequestBody Map<String, Object> payload) {
         try {
             logger.info("Received ping request with payload: {}", payload);
 

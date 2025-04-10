@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.Map;
+
 /**
  * Service for processing ping requests in Service B.
  */
@@ -26,15 +28,15 @@ public class PongService {
      * @param payload the incoming request payload
      * @return a Response object containing the result
      */
-    public Response processPing(String payload) {
+    public Response processPing(Map<String, Object> payload) {
         logger.info("Processing ping request with payload: {}", payload);
 
-        if (!StringUtils.hasText(payload)) {
-            logger.warn("Invalid payload: Payload is null or empty");
-            return new Response("Error: Invalid payload");
+        String message = (String) payload.get("message");
+        if (message == null || message.isEmpty()) {
+            throw new IllegalArgumentException("Message field is missing or empty");
         }
 
-        dbLoggerUtil.log("Service B received: " + payload);
+        dbLoggerUtil.log("Service B received: " + message);
         logger.info("Ping request processed successfully");
 
         return new Response("pong");
