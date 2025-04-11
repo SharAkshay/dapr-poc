@@ -53,14 +53,18 @@ public class ServiceBClient {
             String payloadJson = objectMapper.writeValueAsString(payload);
             logger.info(INVOKING_SERVICE_LOG, payloadJson);
             logger.info(SERVICE_CONFIG_LOG, serviceBConfig.getAppId(), serviceBConfig.getMethod());
-
-            return daprClient.invokeMethod(
+            byte[] responseBody = daprClient.invokeMethod(
                     serviceBConfig.getAppId(),
                     serviceBConfig.getMethod(),
                     payloadJson,
                     HttpExtension.POST,
-                    ResponseModel.class
-            ).block();
+                    null,
+                    byte[].class).block();
+            if (responseBody == null) {
+                logger.warn("Received null response from Service B");
+                return new ResponseModel("Error: Null response from Service B");
+            }
+            return objectMapper.readValue(responseBody, ResponseModel.class);
         } catch (Exception e) {
             logger.error(ERROR_LOG, e.getMessage(), e);
             throw new ServiceInvocationException("Failed to invoke serviceB", e);
