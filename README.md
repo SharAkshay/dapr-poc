@@ -85,9 +85,7 @@ curl -X POST http://localhost:3501/v1.0/invoke/service-b/method/service-b/ping \
 From service-a, invoke service-b through its Dapr sidecar:
 
 ```bash
-curl -X POST http://service-b-dapr:3501/v1.0/invoke/service-b/method/service-b/ping \
--H "Content-Type: application/json" \
--d '{"message": "ping from Service A container"}'
+docker exec -it service-a curl -X POST http://service-b-dapr:3501/v1.0/invoke/service-b/method/service-b/ping -H "Content-Type: application/json" -d '{"message": "ping from Service A container"}'
 ```
 
 ### Step 7: Verify Database Entries
